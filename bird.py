@@ -1,5 +1,5 @@
 # 이것은 각 상태들을 객체로 구현한 것임.
-BIRD_FRAME_PIXEL = (61, 106)
+BIRD_FRAME_PIXEL = (183, 163)
 PIXEL_PER_METER = (10.0 / 0.3)
 RUN_SPEED_KMPH = 20.0 # 20km/h
 RUN_SPEED_MPM = RUN_SPEED_KMPH * 1000.0 / 60.0
@@ -65,9 +65,9 @@ class Idle:
     @staticmethod
     def enter(bird, e):
         if bird.face_dir == -1:
-            bird.action = 2
+            bird.action = 0
         elif bird.face_dir == 1:
-            bird.action = 3
+            bird.action = 0
         bird.dir = 0
         bird.frame = 0
         bird.wait_time = get_time() # pico2d import 필요
@@ -87,7 +87,8 @@ class Idle:
 
     @staticmethod
     def draw(bird):
-        bird.image.clip_draw(int(bird.frame) * 100, bird.action * 100, 100, 100, bird.x, bird.y)
+        bird.image.clip_draw(int(bird.frame) * BIRD_FRAME_PIXEL[0], bird.action * BIRD_FRAME_PIXEL[1],
+                             BIRD_FRAME_PIXEL[0], BIRD_FRAME_PIXEL[1], bird.x, bird.y)
 
 
 
@@ -98,7 +99,7 @@ class Run:
         if right_down(e) or left_up(e): # 오른쪽으로 RUN
             bird.dir, bird.action, bird.face_dir = 1, 1, 1
         elif left_down(e) or right_up(e): # 왼쪽으로 RUN
-            bird.dir, bird.action, bird.face_dir = -1, 0, -1
+            bird.dir, bird.action, bird.face_dir = -1, 1, -1
 
     @staticmethod
     def exit(bird, e):
@@ -117,7 +118,8 @@ class Run:
 
     @staticmethod
     def draw(bird):
-        bird.image.clip_draw(int(bird.frame) * 100, bird.action * 100, 100, 100, bird.x, bird.y)
+        bird.image.clip_draw(int(bird.frame) * BIRD_FRAME_PIXEL[0], bird.action * BIRD_FRAME_PIXEL[1],
+                             BIRD_FRAME_PIXEL[0], BIRD_FRAME_PIXEL[1], bird.x, bird.y)
 
 
 
@@ -185,10 +187,10 @@ class Bird:
     def __init__(self):
         self.x, self.y = 400, 90
         self.frame = 0
-        self.action = 3
+        self.action = 0
         self.face_dir = 1
         self.dir = 0
-        self.image = load_image('animation_sheet.png')
+        self.image = load_image('bird_animation.png')
         self.font = load_font('ENCR10B.TTF', 16)
         self.state_machine = StateMachine(self)
         self.state_machine.start()
