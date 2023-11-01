@@ -13,10 +13,10 @@ RUN_SPEED_PPS = RUN_SPEED_MPS * PIXEL_PER_METER
 
 # 새의 날개짓은 초당 4번으로 함
 # 1s / 3 = 0.25
-# frame 은 10 아니면 4
+# frame 은 14
 TIME_PER_ACTION = 0.25
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
-FRAMES_PER_ACTION = 5
+FRAMES_PER_ACTION = 14
 FRAMES_PER_TIME = ACTION_PER_TIME * FRAMES_PER_ACTION
 
 from pico2d import get_time, load_image, load_font, clamp,  SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_RIGHT
@@ -89,7 +89,7 @@ class Idle:
     def do(bird):
         bird.frame = (bird.frame + FRAMES_PER_TIME * game_framework.frame_time) % bird.frame_size
 
-        if (bird.frame < 0.001):
+        if (bird.frame < FRAMES_PER_TIME * game_framework.frame_time):
             bird.action -= 1
             if (bird.action == 0):
                 bird.frame_size = 4
@@ -136,7 +136,7 @@ class Run:
         bird.x += bird.dir * RUN_SPEED_PPS * game_framework.frame_time
         bird.x = clamp(25, bird.x, 1600-25)
 
-        if (bird.frame < 0.001):
+        if (bird.frame <= FRAMES_PER_TIME * game_framework.frame_time):
             bird.action -= 1
             if (bird.action == 0):
                 bird.frame_size = 4
@@ -173,7 +173,7 @@ class Sleep:
     def do(bird):
         bird.frame = (bird.frame + FRAMES_PER_TIME * game_framework.frame_time) % bird.frame_size
 
-        if (bird.frame < 0.001):
+        if (bird.frame < FRAMES_PER_TIME * game_framework.frame_time):
             bird.action -= 1
             if (bird.action == 0):
                 bird.frame_size = 4
