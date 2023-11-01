@@ -1,4 +1,6 @@
 from pico2d import *
+import time
+
 import game_framework
 
 import game_world
