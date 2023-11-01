@@ -11,9 +11,12 @@ RUN_SPEED_MPM = RUN_SPEED_KMPH * 1000.0 / 60.0
 RUN_SPEED_MPS = RUN_SPEED_MPM / 60.0
 RUN_SPEED_PPS = RUN_SPEED_MPS * PIXEL_PER_METER
 
-TIME_PER_ACTION = 0.5
+# 새의 날개짓은 초당 4번으로 함
+# 1s / 3 = 0.25
+# frame 은 10 아니면 4
+TIME_PER_ACTION = 0.25
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
-FRAMES_PER_ACTION = 8
+FRAMES_PER_ACTION = 5
 FRAMES_PER_TIME = ACTION_PER_TIME * FRAMES_PER_ACTION
 
 from pico2d import get_time, load_image, load_font, clamp,  SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_RIGHT
@@ -69,13 +72,10 @@ class Idle:
 
     @staticmethod
     def enter(bird, e):
-        if bird.face_dir == -1:
-            bird.action = 0
-        elif bird.face_dir == 1:
-            bird.action = 0
+        bird.action = 2
         bird.dir = 0
         bird.frame = 0
-        bird.frame_size = 4
+        bird.frame_size = 5
         bird.wait_time = get_time() # pico2d import 필요
         pass
 
@@ -88,6 +88,17 @@ class Idle:
     @staticmethod
     def do(bird):
         bird.frame = (bird.frame + FRAMES_PER_TIME * game_framework.frame_time) % bird.frame_size
+
+        if (bird.frame < 0.001):
+            bird.action -= 1
+            if (bird.action == 0):
+                bird.frame_size = 4
+            else:
+                bird.frame_size = 5
+
+            if (bird.action < 0):
+                bird.action = 2
+
         if get_time() - bird.wait_time > 2:
             bird.state_machine.handle_event(('TIME_OUT', 0))
 
@@ -95,7 +106,7 @@ class Idle:
     def draw(bird):
         bird.image.clip_composite_draw(int(bird.frame) * BIRD_FRAME_PIXEL[0],
                                        bird.action * BIRD_FRAME_PIXEL[1], BIRD_FRAME_PIXEL[0], BIRD_FRAME_PIXEL[1],
-                                       0, '', bird.x, bird.y,
+                                       0, bird.face_dir, bird.x, bird.y,
                                        PIXEL_PER_METER, PIXEL_PER_METER) # 2미터
 
 
@@ -105,10 +116,10 @@ class Run:
     @staticmethod
     def enter(bird, e):
         if right_down(e) or left_up(e): # 오른쪽으로 RUN
-            bird.dir, bird.action, bird.face_dir = 1, 1, 1
+            bird.dir, bird.action, bird.face_dir = 1, 2, ''
         elif left_down(e) or right_up(e): # 왼쪽으로 RUN
-            bird.dir, bird.action, bird.face_dir = -1, 1, -1
-
+            bird.dir, bird.action, bird.face_dir = -1, 2, 'h'
+        bird.action = 2
         bird.frame_size = 5
 
     @staticmethod
@@ -125,12 +136,22 @@ class Run:
         bird.x += bird.dir * RUN_SPEED_PPS * game_framework.frame_time
         bird.x = clamp(25, bird.x, 1600-25)
 
+        if (bird.frame < 0.001):
+            bird.action -= 1
+            if (bird.action == 0):
+                bird.frame_size = 4
+            else:
+                bird.frame_size = 5
+
+            if (bird.action < 0):
+                bird.action = 2
+
 
     @staticmethod
     def draw(bird):
         bird.image.clip_composite_draw(int(bird.frame) * BIRD_FRAME_PIXEL[0],
                                        bird.action * BIRD_FRAME_PIXEL[1], BIRD_FRAME_PIXEL[0], BIRD_FRAME_PIXEL[1],
-                                       0, '', bird.x, bird.y,
+                                       0, bird.face_dir, bird.x, bird.y,
                                        PIXEL_PER_METER, PIXEL_PER_METER)
 
 
@@ -139,6 +160,7 @@ class Sleep:
 
     @staticmethod
     def enter(bird, e):
+        bird.action = 2
         bird.frame = 0
         bird.frame_size = 4
         pass
@@ -151,19 +173,29 @@ class Sleep:
     def do(bird):
         bird.frame = (bird.frame + FRAMES_PER_TIME * game_framework.frame_time) % bird.frame_size
 
+        if (bird.frame < 0.001):
+            bird.action -= 1
+            if (bird.action == 0):
+                bird.frame_size = 4
+            else:
+                bird.frame_size = 5
+
+            if (bird.action < 0):
+                bird.action = 2
+
 
 
     @staticmethod
     def draw(bird):
-        if bird.face_dir == -1:
+        if bird.face_dir == 'h':
             bird.image.clip_composite_draw(int(bird.frame) * BIRD_FRAME_PIXEL[0],
                                            bird.action * BIRD_FRAME_PIXEL[1], BIRD_FRAME_PIXEL[0], BIRD_FRAME_PIXEL[1],
-                                          -3.141592 / 2, '', bird.x + 25, bird.y - 25,
+                                          -3.141592 / 2, bird.face_dir, bird.x + 25, bird.y - 25,
                                             PIXEL_PER_METER, PIXEL_PER_METER)
         else:
             bird.image.clip_composite_draw(int(bird.frame) * BIRD_FRAME_PIXEL[0],
                                            bird.action * BIRD_FRAME_PIXEL[1], BIRD_FRAME_PIXEL[0], BIRD_FRAME_PIXEL[1],
-                                           3.141592 / 2, '', bird.x - 25, bird.y - 25,
+                                           3.141592 / 2, bird.face_dir, bird.x - 25, bird.y - 25,
                                            PIXEL_PER_METER, PIXEL_PER_METER)
 
 
@@ -206,7 +238,7 @@ class Bird:
         self.frame = 0
         self.frame_size = 4
         self.action = 0
-        self.face_dir = 1
+        self.face_dir = ''
         self.dir = 0
         self.image = load_image('bird_animation.png')
         self.font = load_font('ENCR10B.TTF', 16)
@@ -215,14 +247,14 @@ class Bird:
         self.item = 'Ball'
 
 
-    def fire_ball(self):
-
-        if self.item ==   'Ball':
-            ball = Ball(self.x, self.y, self.face_dir*10)
-            game_world.add_object(ball)
-        elif self.item == 'BigBall':
-            ball = BigBall(self.x, self.y, self.face_dir*10)
-            game_world.add_object(ball)
+    # def fire_ball(self):
+    #
+    #     if self.item ==   'Ball':
+    #         # ball = Ball(self.x, self.y, self.face_dir*10)
+    #         game_world.add_object(ball)
+    #     elif self.item == 'BigBall':
+    #         ball = BigBall(self.x, self.y, self.face_dir*10)
+    #         game_world.add_object(ball)
         # if self.face_dir == -1:
         #     print('FIRE BALL LEFT')
         #
