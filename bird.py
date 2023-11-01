@@ -1,7 +1,13 @@
 # 이것은 각 상태들을 객체로 구현한 것임.
+
+# 새의 크기는 가로 세로가 2m가 되게 할 예정
+# 새는 현재 가로가 전체 182p이므로
+# 2 / 182 = 0.011(소수점 4번째자리 반올림) 즉 픽셀당 약 0.011m
+# 즉 미터당 픽셀은 1 / 0.11
+
 BIRD_FRAME_PIXEL = (182, 163)
-PIXEL_PER_METER = (10.0 / 0.3)
-RUN_SPEED_KMPH = 20.0 # 20km/h
+PIXEL_PER_METER = (1 / 0.011)
+RUN_SPEED_KMPH = 10.0 # 20km/h
 RUN_SPEED_MPM = RUN_SPEED_KMPH * 1000.0 / 60.0
 RUN_SPEED_MPS = RUN_SPEED_MPM / 60.0
 RUN_SPEED_PPS = RUN_SPEED_MPS * PIXEL_PER_METER
@@ -88,8 +94,10 @@ class Idle:
 
     @staticmethod
     def draw(bird):
-        bird.image.clip_draw(int(bird.frame) * BIRD_FRAME_PIXEL[0], bird.action * BIRD_FRAME_PIXEL[1],
-                             BIRD_FRAME_PIXEL[0], BIRD_FRAME_PIXEL[1], bird.x, bird.y)
+        bird.image.clip_composite_draw(int(bird.frame) * BIRD_FRAME_PIXEL[0],
+                                       bird.action * BIRD_FRAME_PIXEL[1], BIRD_FRAME_PIXEL[0], BIRD_FRAME_PIXEL[1],
+                                       0, '', bird.x, bird.y,
+                                       2 *  PIXEL_PER_METER, 2 * PIXEL_PER_METER) # 2미터
 
 
 
@@ -121,8 +129,10 @@ class Run:
 
     @staticmethod
     def draw(bird):
-        bird.image.clip_draw(int(bird.frame) * BIRD_FRAME_PIXEL[0], bird.action * BIRD_FRAME_PIXEL[1],
-                             BIRD_FRAME_PIXEL[0], BIRD_FRAME_PIXEL[1], bird.x, bird.y)
+        bird.image.clip_composite_draw(int(bird.frame) * BIRD_FRAME_PIXEL[0],
+                                       bird.action * BIRD_FRAME_PIXEL[1], BIRD_FRAME_PIXEL[0], BIRD_FRAME_PIXEL[1],
+                                       0, '', bird.x, bird.y,
+                                       2 * PIXEL_PER_METER, 2 * PIXEL_PER_METER)
 
 
 
@@ -149,11 +159,13 @@ class Sleep:
         if bird.face_dir == -1:
             bird.image.clip_composite_draw(int(bird.frame) * BIRD_FRAME_PIXEL[0],
                                            bird.action * BIRD_FRAME_PIXEL[1], BIRD_FRAME_PIXEL[0], BIRD_FRAME_PIXEL[1],
-                                          -3.141592 / 2, '', bird.x + 25, bird.y - 25, 100, 100)
+                                          -3.141592 / 2, '', bird.x + 25, bird.y - 25,
+                                           2 * PIXEL_PER_METER, 2 * PIXEL_PER_METER)
         else:
             bird.image.clip_composite_draw(int(bird.frame) * BIRD_FRAME_PIXEL[0],
                                            bird.action * BIRD_FRAME_PIXEL[1], BIRD_FRAME_PIXEL[0], BIRD_FRAME_PIXEL[1],
-                                           3.141592 / 2, '', bird.x - 25, bird.y - 25, 100, 100)
+                                           3.141592 / 2, '', bird.x - 25, bird.y - 25,
+                                           2 * PIXEL_PER_METER, 2 * PIXEL_PER_METER)
 
 
 class StateMachine:
